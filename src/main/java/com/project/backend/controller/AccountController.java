@@ -1,16 +1,9 @@
 package com.project.backend.controller;
 
-import java.util.Collection;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,9 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.project.backend.config.CustomAuthenticationProvider;
-import com.project.backend.config.SecurityConfiguration;
-import com.project.backend.dto.AccountLoginDto;
+import com.project.backend.dto.AccountCreatingDto;
 import com.project.backend.entity.Account;
 import com.project.backend.enumerate.Role;
 import com.project.backend.service.AccountService;
@@ -39,33 +30,41 @@ public class AccountController {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
-	@Autowired
-	private AuthenticationManager authenticationManager;
-
 	@GetMapping("/")
-	public String userHomePage(Authentication authentication, Model model) {
-		if (authentication != null) {
-			model.addAttribute("authentication", authentication.getPrincipal());
-			model.addAttribute("isAdmin",
-					authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN")));
+	public String userHomePage(@AuthenticationPrincipal User user, Model model) {
+		if (user != null) {
+			model.addAttribute("authentication", user);
+			model.addAttribute("isAdmin", user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN")));
 		}
 		return "home";
 	}
 
 	@GetMapping("/admin/")
-	public String adminHomePage(Authentication authentication, Model model) {
-		model.addAttribute("authentication", authentication.getPrincipal());
-		model.addAttribute("hasUserRole",
-				authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER")));
+	public String adminHomePage(@AuthenticationPrincipal User user, Model model) {
+		model.addAttribute("authentication", user);
+		model.addAttribute("hasUserRole", user.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER")));
 		return "adminHome";
 	}
 
+	@GetMapping("/user/register")
+	public String userRegisterPage(AccountCreatingDto accountCreatingDto, Model model) {
+		model.addAttribute("accountCreateDto", accountCreatingDto);
+		return "signUpPage";
+	}
+
 	@PostMapping("/user/register")
-	@ResponseBody
-	public Account registerUser(@RequestBody Account account, Role role) {
-		account.setUserPassword(passwordEncoder.encode(account.getUserPassword()));
+	public String registerUser(@Valid @ModelAttribute AccountCreatingDto accountCreatingDto,
+			BindingResult bindingResult, Model model, Role role, Account account) {
+		if (bindingResult.hasErrors()) {
+			return "signUpPage";
+		}
+		account.setUserName(accountCreatingDto.getUserName());
+		account.setUserEmail(accountCreatingDto.getUserEmail());
+		account.setUserContact(accountCreatingDto.getUserContact());
+		account.setUserPassword(passwordEncoder.encode(accountCreatingDto.getUserPassword()));
 		account.getRoles().add(role.ROLE_USER);
-		return accountService.registerUser(account);
+		accountService.registerUser(account);
+		return "redirect:/login";
 	}
 
 	@PostMapping("/admin/register")
@@ -78,31 +77,8 @@ public class AccountController {
 	}
 
 	@GetMapping("/login")
-	public String loginPage(Model model, AccountLoginDto accountLoginDto) {
-		model.addAttribute("accountLoginDto", accountLoginDto);
+	public String loginPage() {
 		return "loginPage";
-	}
-
-	@PostMapping("/login")
-	public String loginAccount(@Valid @ModelAttribute(value = "accountLoginDto") AccountLoginDto accountLoginDto,
-			BindingResult bindingResult, Model model, SecurityContextHolder securityContextHolder) {
-
-		if (bindingResult.hasErrors()) {
-			return "loginPage";
-		}
-
-		try {
-			System.out.println("Try Block Exicuting...");
-			Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-					accountLoginDto.getUserEmail(), accountLoginDto.getUserPassword()));
-			System.out.println(authenticate.isAuthenticated() + " Authendicated");
-		} catch (AuthenticationException e) {
-			System.out.println("Invalid Email or Password");
-			model.addAttribute("InvalidEmailOrPassword", "Invalid Email or Password");
-			return "loginPage";
-		}
-
-		return "redirect:/";
 	}
 
 }

@@ -10,19 +10,34 @@
 	crossorigin="anonymous">
 </head>
 <body>
-	<div class="container">
-		<h1 class="text-center">Shell.</h1>
-		<div class="" th:if="${authentication != null}">
-			<div class="" th:object="${authentication}">
-				<h5 th:text="${authentication.Username}"></h5>
-				<div th:if="${isAdmin}">
-					<a th:href="@{/admin/}">Switch to Admin</a>
-				</div>
-				<a href="/process_logout" class="btn btn-outline-danger">Logout</a>
-			</div>
+	<div class="navbar navbar-light bg-light py-4 px-5"
+		th:object="${authentication}">
+		<h1 class="navbar-brand">Shell. User Dashboard</h1>
+		<div class="" th:if="${isAdmin}">
+			<a th:href="@{/admin/}" class="btn btn-outline-primary">Switch to
+				Admin</a>
 		</div>
-		<div class="" th:if="${authentication == null}">
-			<a href="/process_login" class="btn btn-outline-primary">Login</a>
+	</div>
+	<div class="container py-5 d-flex flex-column gap-5">
+		<div class="p-5 rounded bg-light shadow w-50">
+			<div class="" th:if="${authentication != null}">
+				<div class="d-flex flex-column gap-3">
+					<h5 th:text="${authentication.Username}"></h5>
+					<div th:if="${authentication != null}" class="d-flex gap-3 w-25">
+						<a href="/perform_logout" class="btn btn-outline-danger">Logout</a>
+					</div>
+				</div>
+			</div>
+			<div class="" th:if="${authentication == null}">
+				<div class="">
+					<h6>Login your Shell. account</h6>
+					<p>
+						If you don't have an account please <a href="/user/register">sign
+							up</a>
+					</p>
+				</div>
+				<a href="/login" class="btn btn-outline-primary">Login</a>
+			</div>
 		</div>
 	</div>
 </body>

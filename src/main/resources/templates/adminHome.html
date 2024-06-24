@@ -10,15 +10,22 @@
 	crossorigin="anonymous">
 </head>
 <body>
-	<div class="container">
-		<h1 class="text-center">Shell. Admin</h1>
-		<div class="" th:object="${authentication}">
-			<h5 th:text="${authentication.Username}"></h5>
-			<div class="" th:if="${hasUserRole}">
-				<a th:href="@{/}">Switch to User</a>
+	<div
+		class="navbar navbar-light bg-light py-4 px-5 justify-content-between" th:object="${authentication}">
+		<a href="/" class="navbar-brand">Shell. Admin Dashboard</a>
+		<div class="" th:if="${hasUserRole }">
+			<a th:href="@{/}" class="btn btn-outline-primary">Switch to User</a>
+		</div>
+	</div>
+	<div class="container py-5">
+		<div class="bg-light d-flex flex-column gap-4 rounded shadow p-5 w-50">
+			<div class="">
+				<div class="mb-4">
+					<h5 th:text="${authentication.Username}"></h5>
+				</div>
+				<a href="/perform_logout" class="btn btn-outline-danger">Logout</a>
 			</div>
 		</div>
-		<a href="/process_logout">Logout</a>
 	</div>
 </body>
 </html>
